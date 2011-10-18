@@ -1,6 +1,20 @@
 = sneaky-save
 
-Kevin, please add description
+ActiveRecord extension. Allows to save record without calling callbacks and validations.
+
+== Installing
+  # gem install sneaky-save
+
+== Using
+  # Update
+  @existed_record.sneaky_save
+
+  # Insert
+  Model.new.sneaky_save
+
+== Running specs
+* Clone the repo
+* run `bundle exec rake spec`
 
 == Contributing to sneaky-save
 
