@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.email = %q{kgoslar@partyearth.com}
   s.extra_rdoc_files = [
     "LICENSE.txt",
-    "README.rdoc"
+    "README.md"
   ]
   s.files = `git ls-files`.split("\n")
   s.homepage = %q{http://github.com/partyearth/sneaky-save}
