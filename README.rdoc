@@ -5,6 +5,9 @@ ActiveRecord extension. Allows to save record without calling callbacks and vali
 == Installing
   # gem install sneaky-save
 
+Or put in your gemfile for latest version:
+  gem 'sneaky-save', git: 'git://github.com/partyearth/sneaky-save.git'
+
 == Using
   # Update
   @existed_record.sneaky_save

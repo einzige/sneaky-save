@@ -1,7 +1,7 @@
 require "active_record"
 require "logger"
 require "rspec"
-require "sneaky_save"
+require "sneaky-save"
 
 RSpec.configure { |config| config.mock_with :rspec }
 

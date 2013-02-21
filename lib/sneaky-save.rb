@@ -3,11 +3,9 @@
 # mailto:kgoslar@partyearth.com
 #++
 module SneakySave
-  extend ActiveSupport::Concern
 
   # Saves record without running callbacks/validations.
   # Returns true if any record is changed.
-  #
   # @note - Does not reload updated record by default.
   #       - Does not save associated collections.
   #       - Saves only belongs_to relations.
@@ -23,8 +21,7 @@ module SneakySave
 
   protected
 
-    # Makes INSERT query in database without running any callbacks.
-    #
+    # Makes INSERT query in database without running any callbacks
     # @return [false, true]
     def sneaky_create
       if self.id.nil? && connection.prefetch_primary_key?(self.class.table_name)
@@ -32,6 +29,11 @@ module SneakySave
       end
 
       attributes_values = send :arel_attributes_values
+
+      # Remove the id field for databases like Postgres which will raise an error on id being NULL
+      if self.id.nil? && !connection.prefetch_primary_key?(self.class.table_name)
+        attributes_values.reject! { |key,_| key.name == 'id' }
+      end
 
       new_id = if attributes_values.empty?
         self.class.unscoped.insert connection.empty_insert_statement_value
@@ -43,13 +45,12 @@ module SneakySave
       !!(self.id ||= new_id)
     end
 
-    # Makes update query without running callbacks.
-    #
+    # Makes update query without running callbacks
     # @return [false, true]
     def sneaky_update
 
       # Handle no changes.
-      return true unless changes.any?
+      return true if changes.empty?
 
       # Here we have changes --> save them.
       pk = self.class.primary_key
