@@ -9,7 +9,7 @@ $ gem install sneaky-save
 
 Or put in your gemfile for latest version:
 ```ruby
-gem 'sneaky-save', git: 'git://github.com/partyearth/sneaky-save.git'
+gem 'sneaky-save', git: 'git://github.com/einzige/sneaky-save.git'
 ```
 
 ## Using
