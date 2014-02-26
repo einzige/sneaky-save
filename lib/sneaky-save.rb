@@ -55,7 +55,7 @@ module SneakySave
       # Here we have changes --> save them.
       pk = self.class.primary_key
       original_id = changed_attributes.has_key?(pk) ? changes[pk].first : send(pk)
-      !self.class.where(pk: original_id).update_all(attributes).zero?
+      !self.class.where({:pk => original_id}).update_all(attributes).zero?
     end
 end
 
