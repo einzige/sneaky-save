@@ -17,7 +17,7 @@ shared_context 'use connection', use_connection: true do
     before_save :before_save_callback
 
     def before_save_callback
-      puts 'BEFORE SAVE CALLED'
+      'BEFORE SAVE CALLED'
     end
   end
 end
