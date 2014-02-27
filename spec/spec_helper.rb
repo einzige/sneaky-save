@@ -1,9 +1,29 @@
-require "active_record"
-require "logger"
-require "rspec"
-require "sneaky-save"
+require 'active_record'
+require 'sneaky-save'
 
-RSpec.configure { |config| config.mock_with :rspec }
+shared_context 'use connection', use_connection: true do
+  ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
-ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => "db/sqlite3.test.db")
-ActiveRecord::Base.logger = Logger.new(STDOUT)
+  ActiveRecord::Schema.define do
+    create_table 'fakes' do |table|
+      table.column :name, :string
+    end
+  end
+
+  class Fake < ActiveRecord::Base
+    validates_presence_of :name
+
+    before_save :before_save_callback
+
+    def before_save_callback
+      puts 'BEFORE SAVE CALLED'
+    end
+  end
+end
+
+
+RSpec.configure do |config|
+  config.mock_with :rspec
+  config.color_enabled = true
+  config.formatter = :documentation
+end
