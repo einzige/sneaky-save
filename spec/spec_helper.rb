@@ -1,4 +1,5 @@
 require 'active_record'
+require 'sqlite3'
 require 'sneaky-save'
 
 shared_context 'use connection', use_connection: true do

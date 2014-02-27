@@ -24,3 +24,5 @@ doc
 pkg
 
 .ruby-version
+
+Gemfile.lock
