@@ -1,5 +1,6 @@
 # sneaky-save
 
+[![Gem Version](https://badge.fury.io/rb/sneaky-save.png)](http://badge.fury.io/rb/sneaky-save)
 [![Build Status](https://travis-ci.org/einzige/sneaky-save.png?branch=master)](https://travis-ci.org/einzige/sneaky-save)
 
 ActiveRecord extension. Allows to save record without calling callbacks and validations.
