@@ -59,7 +59,7 @@ module SneakySave
     end
 
     def skeaky_attributes_values
-      if ActiveRecord.version.segments.first > 3
+      if ActiveRecord::VERSION::STRING.split('.').first.to_i > 3
         send :arel_attributes_with_values_for_create, attribute_names
       else
         send :arel_attributes_values
@@ -67,7 +67,7 @@ module SneakySave
     end
 
     def sneaky_connection
-      if ActiveRecord.version.segments.first > 3
+      if ActiveRecord::VERSION::STRING.split('.').first.to_i > 3
         self.class.connection
       else
         connection
