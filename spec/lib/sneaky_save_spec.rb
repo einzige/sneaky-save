@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe SneakySave, use_connection: true do
   after :each do 
-    subject.sneaky_save.should eq(true)
+    expect(subject.sneaky_save).to eq(true)
   end
 
   context 'new record' do
@@ -51,9 +51,9 @@ describe SneakySave, use_connection: true do
 
       it 'stores attributes in database' do
         subject.name = 'new name'
-        subject.sneaky_save.should be_true
+        expect(subject.sneaky_save).to eq(true)
         subject.reload
-        subject.name.should == 'new name'
+        expect(subject.name).to eq('new name')
       end
 
       it 'does not call any callback' do
