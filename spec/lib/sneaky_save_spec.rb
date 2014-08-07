@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe SneakySave, use_connection: true do
   after :each do 
-    subject.sneaky_save.should be_true
+    subject.sneaky_save.should eq(true)
   end
 
   context 'new record' do
@@ -11,14 +11,14 @@ describe SneakySave, use_connection: true do
     it('returns true if everything is good') {}
 
     it 'does insert of the new record' do
-      subject.should_receive(:sneaky_create).once.and_return true
+      allow(subject).to receive(:sneaky_create).once.and_return(true)
     end
 
     it 'stores attributes in database' do
       subject.name = 'test'
       subject.sneaky_save
       subject.reload
-      subject.name.should == 'test'
+      expect(subject.name).to eq('test')
     end
 
     it 'does not call any callback' do
