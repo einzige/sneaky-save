@@ -24,19 +24,19 @@ module SneakySave
     # Makes INSERT query in database without running any callbacks
     # @return [false, true]
     def sneaky_create
-      if self.id.nil? && self.class.connection.prefetch_primary_key?(self.class.table_name)
-        self.id = self.class.connection.next_sequence_value(self.class.sequence_name)
+      if self.id.nil? && sneaky_connection.prefetch_primary_key?(self.class.table_name)
+        self.id = sneaky_connection.next_sequence_value(self.class.sequence_name)
       end
 
-      attributes_values = send :arel_attributes_with_values_for_create, attribute_names
+      attributes_values = skeaky_attributes_values
 
       # Remove the id field for databases like Postgres which will raise an error on id being NULL
-      if self.id.nil? && !self.class.connection.prefetch_primary_key?(self.class.table_name)
+      if self.id.nil? && !sneaky_connection.prefetch_primary_key?(self.class.table_name)
         attributes_values.reject! { |key,_| key.name == 'id' }
       end
 
       new_id = if attributes_values.empty?
-        self.class.unscoped.insert self.class.connection.empty_insert_statement_value
+        self.class.unscoped.insert sneaky_connection.empty_insert_statement_value
       else
         self.class.unscoped.insert attributes_values
       end
@@ -56,6 +56,22 @@ module SneakySave
       pk = self.class.primary_key
       original_id = changed_attributes.has_key?(pk) ? changes[pk].first : send(pk)
       !self.class.where(pk => original_id).update_all(attributes).zero?
+    end
+
+    def skeaky_attributes_values
+      if ActiveRecord::VERSION::STRING.split('.').first.to_i > 3
+        send :arel_attributes_with_values_for_create, attribute_names
+      else
+        send :arel_attributes_values
+      end
+    end
+
+    def sneaky_connection
+      if ActiveRecord::VERSION::STRING.split('.').first.to_i > 3
+        self.class.connection
+      else
+        connection
+      end
     end
 end
 
