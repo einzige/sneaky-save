@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{sneaky-save}
-  s.version = '0.0.5'
+  s.version = '0.0.6'
 
   s.date = %q{2013-12-09}
   s.authors = ["Sergei Zinin (einzige)"]
