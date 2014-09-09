@@ -7,12 +7,12 @@ shared_context 'use connection', use_connection: true do
 
   ActiveRecord::Schema.define do
     create_table 'fakes' do |table|
-      table.column :name, :string
+      table.column :name, :string, null: false
     end
   end
 
   class Fake < ActiveRecord::Base
-    validates_presence_of :name
+    validates :name, presence: true
 
     before_save :before_save_callback
 
