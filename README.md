@@ -17,11 +17,14 @@ gem 'sneaky-save', git: 'git://github.com/einzige/sneaky-save.git'
 
 ## Using
 ```ruby
-# Update
-@existed_record.sneaky_save
+# Update. Returns true on success, false otherwise.
+existing_record.sneaky_save
 
-# Insert
+# Insert. Returns true on success, false otherwise.
 Model.new.sneaky_save
+
+# Raise exception on failure.
+record.sneaky_save!
 ```
 
 ## Running specs

@@ -13,13 +13,24 @@ module SneakySave
   # @return [false, true]
   def sneaky_save
     begin
-      new_record? ? sneaky_create : sneaky_update
+      sneaky_create_or_update
     rescue ActiveRecord::StatementInvalid
       false
     end
   end
 
+  # Saves the record raising an exception if it fails.
+  # @return [true] if save was successful.
+  # @raise [ActiveRecord::StatementInvalid] if save failed.
+  def sneaky_save!
+    sneaky_create_or_update
+  end
+
   protected
+
+    def sneaky_create_or_update
+      new_record? ? sneaky_create : sneaky_update
+    end
 
     # Makes INSERT query in database without running any callbacks
     # @return [false, true]
