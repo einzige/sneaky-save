@@ -39,7 +39,7 @@ module SneakySave
         self.id = sneaky_connection.next_sequence_value(self.class.sequence_name)
       end
 
-      attributes_values = skeaky_attributes_values
+      attributes_values = sneaky_attributes_values
 
       # Remove the id field for databases like Postgres which will raise an error on id being NULL
       if self.id.nil? && !sneaky_connection.prefetch_primary_key?(self.class.table_name)
@@ -70,20 +70,23 @@ module SneakySave
       serialized_fields = self.class.serialized_attributes.keys
       changed_values = sneaky_update_fields
       
-      (serialized_fields & changed_values.keys).each_with_object(changed_values) { |key, attr| 
-        attr[key] = @attributes[key].serialized_value
+      # serialize values for rails3 before updating.
+      (serialized_fields & changed_values.keys).each_with_object(changed_values) { |key, val| 
+        val[key] = @attributes[key].serialized_value
       } unless rails4?
 
       !self.class.where(pk => original_id).update_all(changed_values).zero?
     end
 
-    def skeaky_attributes_values
+    def sneaky_attributes_values
       rails4? ? send(:arel_attributes_with_values_for_create, attribute_names) : send(:arel_attributes_values)
     end
 
     def sneaky_update_fields
       changes.keys.each_with_object({}) { |field, value|
-        value[field] = changes[field].last
+        # do not trust values from changes directly
+        # overridden reader/writer methods might make it behave unexpectedly
+        value[field] = read_attribute(field)
       }
     end
 
