@@ -66,23 +66,33 @@ module SneakySave
       # Here we have changes --> save them.
       pk = self.class.primary_key
       original_id = changed_attributes.has_key?(pk) ? changes[pk].first : send(pk)
-      !self.class.where(pk => original_id).update_all(attributes).zero?
+
+      serialized_fields = self.class.serialized_attributes.keys
+      changed_values = sneaky_update_fields
+      
+      (serialized_fields & changed_values.keys).each_with_object(changed_values) { |key, attr| 
+        attr[key] = @attributes[key].serialized_value
+      } unless rails4?
+
+      !self.class.where(pk => original_id).update_all(changed_values).zero?
     end
 
     def skeaky_attributes_values
-      if ActiveRecord::VERSION::STRING.split('.').first.to_i > 3
-        send :arel_attributes_with_values_for_create, attribute_names
-      else
-        send :arel_attributes_values
-      end
+      rails4? ? send(:arel_attributes_with_values_for_create, attribute_names) : send(:arel_attributes_values)
+    end
+
+    def sneaky_update_fields
+      changes.keys.each_with_object({}) { |field, value|
+        value[field] = changes[field].last
+      }
     end
 
     def sneaky_connection
-      if ActiveRecord::VERSION::STRING.split('.').first.to_i > 3
-        self.class.connection
-      else
-        connection
-      end
+      rails4? ? self.class.connection : connection
+    end
+
+    def rails4?
+      ActiveRecord::VERSION::STRING.to_i > 3
     end
 end
 
