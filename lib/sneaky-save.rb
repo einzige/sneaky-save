@@ -67,31 +67,39 @@ module SneakySave
       pk = self.class.primary_key
       original_id = changed_attributes.has_key?(pk) ? changes[pk].first : send(pk)
 
-      serialized_fields = self.class.serialized_attributes.keys
       changed_values = sneaky_update_fields
-      
+
       # serialize values for rails3 before updating.
-      (serialized_fields & changed_values.keys).each_with_object(changed_values) { |key, val| 
+      s_f = self.class.serialized_attributes.keys & changed_values.keys
+      s_f.each_with_object(changed_values) do |key, val|
         val[key] = @attributes[key].serialized_value
-      } unless rails4?
+      end unless rails4?
 
       !self.class.where(pk => original_id).update_all(changed_values).zero?
     end
 
     def sneaky_attributes_values
-      rails4? ? send(:arel_attributes_with_values_for_create, attribute_names) : send(:arel_attributes_values)
+      if rails4?
+        send(:arel_attributes_with_values_for_create, attribute_names)
+      else
+        send(:arel_attributes_values)
+      end
     end
 
     def sneaky_update_fields
-      changes.keys.each_with_object({}) { |field, value|
+      changes.keys.each_with_object({}) do |field, value|
         # do not trust values from changes directly
         # overridden reader/writer methods might make it behave unexpectedly
         value[field] = read_attribute(field)
-      }
+      end
     end
 
     def sneaky_connection
-      rails4? ? self.class.connection : connection
+      if rails4?
+        self.class.connection
+      else
+        connection
+      end
     end
 
     def rails4?
