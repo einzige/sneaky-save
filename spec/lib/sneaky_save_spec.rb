@@ -37,6 +37,17 @@ describe SneakySave, use_connection: true do
         subject.name = nil
         expect { subject.sneaky_save! }.to raise_error(ActiveRecord::StatementInvalid)
       end
+
+      context 'associations' do
+        let(:belonger) { Belonger.create! }
+
+        it 'stores associations' do
+          subject.belonger = belonger
+          subject.sneaky_save!
+          subject.reload
+          expect(subject.belonger_id).to eq(belonger.id)
+        end
+      end
     end
   end
 
@@ -82,6 +93,17 @@ describe SneakySave, use_connection: true do
       it 'raises an exception when update fails' do
         subject.name = nil
         expect { subject.sneaky_save! }.to raise_error(ActiveRecord::StatementInvalid)
+      end
+
+      context 'associations' do
+        let(:belonger) { Belonger.create! }
+
+        it 'stores associations' do
+          subject.belonger = belonger
+          subject.sneaky_save!
+          subject.reload
+          expect(subject.belonger_id).to eq(belonger.id)
+        end
       end
     end
   end
