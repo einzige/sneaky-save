@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{sneaky-save}
-  s.version = '0.1.0'
+  s.version = '0.1.1'
 
-  s.date = %q{2013-12-09}
+  s.date = %q{2016-08-06}
   s.authors = ["Sergei Zinin (einzige)"]
-  s.email = %q{zinin@xakep.ru}
+  s.email = %q{szinin@gmail.com}
   s.homepage = %q{http://github.com/einzige/sneaky-save}
 
   s.licenses = ["MIT"]
