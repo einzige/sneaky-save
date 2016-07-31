@@ -1,3 +1,4 @@
+script: bundle exec rake -t
 language: ruby
 rvm:
   - "2.2.2"
