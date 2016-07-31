@@ -1,9 +1,20 @@
+script: bundle exec rake -t
 language: ruby
 rvm:
-  - "1.9.3"
-  - "2.0.0"
-  - "2.1.2"
+  - "2.2.2"
+  - "2.3.1"
+matrix:
+  include:
+    - rvm: 1.9.3
+      gemfile: gemfiles/rails_3_2
+    - rvm: 2.0.0
+      gemfile: gemfiles/rails_3_2
+    - rvm: 2.1.2
+      gemfile: gemfiles/rails_3_2
+    - rvm: 2.2.0
+      gemfile: gemfiles/rails_3_2
 gemfile:
   - Gemfile
+  - gemfiles/rails_3_2
   - gemfiles/rails_4
-  - gemfiles/rails_3.2
+  - gemfiles/rails_5
