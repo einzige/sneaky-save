@@ -4,8 +4,8 @@
 #++
 module SneakySave
 
-  # Saves record without running callbacks/validations.
-  # Returns true if any record is changed.
+  # Saves the record without running callbacks/validations.
+  # Returns true if the record is changed.
   # @note - Does not reload updated record by default.
   #       - Does not save associated collections.
   #       - Saves only belongs_to relations.
@@ -19,9 +19,10 @@ module SneakySave
     end
   end
 
-  # Saves the record raising an exception if it fails.
+  # Saves record without running callbacks/validations.
+  # @see ActiveRecord::Base#sneaky_save
   # @return [true] if save was successful.
-  # @raise [ActiveRecord::StatementInvalid] if save failed.
+  # @raise [ActiveRecord::StatementInvalid] if saving failed.
   def sneaky_save!
     sneaky_create_or_update
   end
@@ -32,16 +33,16 @@ module SneakySave
       new_record? ? sneaky_create : sneaky_update
     end
 
-    # Makes INSERT query in database without running any callbacks
+    # Performs INSERT query without running any callbacks
     # @return [false, true]
     def sneaky_create
       if self.id.nil? && sneaky_connection.prefetch_primary_key?(self.class.table_name)
         self.id = sneaky_connection.next_sequence_value(self.class.sequence_name)
       end
 
-      attributes_values = skeaky_attributes_values
+      attributes_values = sneaky_attributes_values
 
-      # Remove the id field for databases like Postgres which will raise an error on id being NULL
+      # Remove the id field for databases like Postgres which fail with id passed as NULL
       if self.id.nil? && !sneaky_connection.prefetch_primary_key?(self.class.table_name)
         attributes_values.reject! { |key,_| key.name == 'id' }
       end
@@ -56,33 +57,41 @@ module SneakySave
       !!(self.id ||= new_id)
     end
 
-    # Makes update query without running callbacks
+    # Performs update query without running callbacks
     # @return [false, true]
     def sneaky_update
-
-      # Handle no changes.
       return true if changes.empty?
 
-      # Here we have changes --> save them.
       pk = self.class.primary_key
       original_id = changed_attributes.has_key?(pk) ? changes[pk].first : send(pk)
-      !self.class.where(pk => original_id).update_all(attributes).zero?
+
+      !self.class.where(pk => original_id).update_all(sneaky_update_fields).zero?
     end
 
-    def skeaky_attributes_values
-      if ActiveRecord::VERSION::STRING.split('.').first.to_i > 3
+    def sneaky_attributes_values
+      if sneaky_new_rails?
         send :arel_attributes_with_values_for_create, attribute_names
       else
         send :arel_attributes_values
       end
     end
 
+    def sneaky_update_fields
+      changes.keys.each_with_object({}) do |field, result|
+        result[field] = read_attribute(field)
+      end
+    end
+
     def sneaky_connection
-      if ActiveRecord::VERSION::STRING.split('.').first.to_i > 3
+      if sneaky_new_rails?
         self.class.connection
       else
         connection
       end
+    end
+
+    def sneaky_new_rails?
+      ActiveRecord::VERSION::STRING.to_i > 3
     end
 end
 
