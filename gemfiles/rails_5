@@ -1,0 +1,7 @@
+source 'http://rubygems.org'
+
+gem 'activerecord', '~> 5.0.0'
+gem 'rake'
+gem 'rspec'
+gem 'sqlite3'
+
