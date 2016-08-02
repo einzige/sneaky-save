@@ -9,6 +9,7 @@ shared_context "use connection", use_connection: true do
     create_table "fakes" do |table|
       table.column :name, :string, null: false
       table.column :belonger_id, :integer
+      table.column :config, :text
     end
 
     create_table "belongers" do |table|
@@ -25,6 +26,8 @@ shared_context "use connection", use_connection: true do
     before_save :before_save_callback
 
     belongs_to :belonger
+    
+    serialize :config, Hash
 
     def before_save_callback
       "BEFORE SAVE CALLED"
