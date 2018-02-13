@@ -26,7 +26,7 @@ shared_context "use connection", use_connection: true do
     before_save :before_save_callback
 
     belongs_to :belonger
-    
+
     serialize :config, Hash
 
     def before_save_callback

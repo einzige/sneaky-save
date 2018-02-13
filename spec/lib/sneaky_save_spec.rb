@@ -33,8 +33,8 @@ describe SneakySave, use_connection: true do
 
       it "updates serialized column" do
         expect do
-           subject.config = {one: :two}
-           subject.sneaky_save!
+          subject.config = { one: :two }
+          subject.sneaky_save!
         end.to change { subject.reload.config }.from(nil).to(one: :two)
       end
     end
@@ -82,7 +82,7 @@ describe SneakySave, use_connection: true do
           expect(subject.sneaky_save).to eq(true)
           subject.reload
           expect(subject.name).to eq("new name")
-          expect(subject.config).to eq({test: "test"})
+          expect(subject.config).to eq(test: "test")
         end
 
         it "does not call any callback" do
