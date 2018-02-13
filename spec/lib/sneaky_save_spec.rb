@@ -33,9 +33,9 @@ describe SneakySave, use_connection: true do
 
       it "updates serialized column" do
         expect do
-           fake.config = {one: :two}
-           fake.sneaky_save!
-        end.to change { fake.reload.config }.from(nil).to(one: :two)
+           subject.config = {one: :two}
+           subject.sneaky_save!
+        end.to change { subject.reload.config }.from(nil).to(one: :two)
       end
     end
 
