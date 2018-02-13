@@ -1,8 +1,10 @@
 # -*- encoding: utf-8 -*-
 
+version = File.read(File.expand_path("VERSION", __dir__)).strip
+
 Gem::Specification.new do |s|
   s.name = %q{sneaky-save}
-  s.version = '0.1.2'
+  s.version = version
 
   s.date = %q{2016-08-06}
   s.authors = ["Sergei Zinin (einzige)"]
