@@ -68,8 +68,18 @@ module SneakySave
     pk = self.class.primary_key
     original_id = changed_attributes.key?(pk) ? changes[pk].first : send(pk)
 
+    changed_attributes = sneaky_update_fields
+
+    # Serialize values for rails3 before updating
+    unless sneaky_new_rails?
+      serialized_fields = self.class.serialized_attributes.keys & changed_attributes.keys
+      serialized_fields.each do |field|
+        changed_attributes[field] = @attributes[field].serialized_value
+      end
+    end
+
     !self.class.where(pk => original_id).
-      update_all(sneaky_update_fields).zero?
+      update_all(changed_attributes).zero?
   end
 
   def sneaky_attributes_values

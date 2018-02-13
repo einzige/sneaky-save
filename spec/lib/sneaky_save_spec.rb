@@ -30,6 +30,13 @@ describe SneakySave, use_connection: true do
         expect_any_instance_of(Fake).to_not receive(:valid?)
         subject.sneaky_save
       end
+
+      it "updates serialized column" do
+        subject.config = { test: "test" }
+        expect(subject.sneaky_save).to eq(true)
+        subject.reload
+        expect(subject.config).to eq(test: "test")
+      end
     end
 
     describe "#sneaky_save!" do
@@ -71,10 +78,11 @@ describe SneakySave, use_connection: true do
 
         it "stores attributes in database" do
           subject.name = "new name"
+          subject.config = {test: "test"}
           expect(subject.sneaky_save).to eq(true)
           subject.reload
           expect(subject.name).to eq("new name")
-          expect(subject.sneaky_save).to eq(true)
+          expect(subject.config).to eq(test: "test")
         end
 
         it "does not call any callback" do
