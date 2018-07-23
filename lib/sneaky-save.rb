@@ -36,28 +36,46 @@ module SneakySave
   # Performs INSERT query without running any callbacks
   # @return [false, true]
   def sneaky_create
-    prefetch_pk_allowed = sneaky_connection.prefetch_primary_key?(self.class.table_name)
+    sneaky_attributes_without_id = sneaky_attributes_values
+                                   .except { |key| key.name == "id" }
 
-    if id.nil? && prefetch_pk_allowed
-      self.id = sneaky_connection.next_sequence_value(self.class.sequence_name)
+    column_keys = sneaky_attributes_without_id.keys.map(&:name).join(", ")
+    dynamic_keys = sneaky_attributes_without_id.keys
+                   .map { |key| ":#{key.name}" }
+                   .join(", ")
+
+    mapping = sneaky_attributes_without_id.map do |definition, value|
+      if definition.able_to_type_cast?
+        result = definition.type_cast_for_database(value)
+        if result.is_a?(Struct)
+          if result.respond_to?(:encoder)
+            [definition.name.to_sym, result.encoder.encode(value)]
+          else
+            raise RuntimeError.new('Unknown Type Casted Struct')
+          end
+        else
+          [definition.name.to_sym, result]
+        end
+      else
+        [definition.name.to_sym, value]
+      end
     end
 
-    attributes_values = sneaky_attributes_values
+    sql = <<~SQL
+      INSERT INTO #{self.class.table_name} ( #{column_keys} )
+      VALUES (#{dynamic_keys})
+      RETURNING *
+    SQL
 
-    # Remove the id field for databases like Postgres
-    # which fail with id passed as NULL
-    if id.nil? && !prefetch_pk_allowed
-      attributes_values.reject! { |key, _| key.name == 'id' }
-    end
+    data = self.class.unscoped.find_by_sql([sql.squish, mapping.to_h]).first
 
-    if attributes_values.empty?
-      new_id = self.class.unscoped.insert(sneaky_connection.empty_insert_statement_value)
-    else
-      new_id = self.class.unscoped.insert(attributes_values)
-    end
+    copy_internal(data, self, "@attributes")
+    copy_internal(data, self, "@mutations_from_database")
+    copy_internal(data, self, "@changed_attributes")
+    copy_internal(data, self, "@new_record")
+    copy_internal(data, self, "@destroyed")
 
-    @new_record = false
-    !!(self.id ||= new_id)
+    !!id
   end
 
   # Performs update query without running callbacks
@@ -80,6 +98,10 @@ module SneakySave
 
     !self.class.where(pk => original_id).
       update_all(changed_attributes).zero?
+  end
+
+  def copy_internal(source, target, key)
+    target.instance_variable_set(key, source.instance_variable_get(key))
   end
 
   def sneaky_attributes_values
