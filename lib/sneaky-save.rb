@@ -40,8 +40,9 @@ module SneakySave
                                    .except { |key| key.name == "id" }
 
     column_keys = sneaky_attributes_without_id.keys
-                  .map { |key| "\"#{key}\"" } # to avoid conflicts with column names
+                  .map { |key| "\"#{key.name}\"" } # to avoid conflicts with column names
                   .join(", ")
+
     dynamic_keys = sneaky_attributes_without_id.keys
                    .map { |key| ":#{key.name}" }
                    .join(", ")
