@@ -99,11 +99,11 @@ module SneakySave
   end
 
   def generate_constraint(avoid_insert_conflict, column_keys, dynamic_keys)
-    options = avoid_insert_conflict.extract_options!
+    options = avoid_insert_conflict&.extract_options!
     return unless avoid_insert_conflict.present?
 
     on_conflict = "ON CONFLICT (#{[avoid_insert_conflict].flatten.join(', ')}) "
-    if options[:where].present?
+    if options&.dig(:where).present?
       on_conflict += "WHERE #{options[:where]} "
     end
     on_conflict += "DO UPDATE SET (#{column_keys}) = (#{dynamic_keys})"
