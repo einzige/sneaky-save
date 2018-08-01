@@ -47,10 +47,11 @@ module SneakySave
                    .map { |key| ":#{key.name}" }
                    .join(", ")
 
-    constraint = if avoid_insert_conflict.present?
-                   "ON CONFLICT (#{[avoid_insert_conflict].flatten.join(', ')}) "\
-                   "DO UPDATE SET (#{column_keys}) = (#{dynamic_keys})"
-                 end
+    constraint = generate_constraint(
+      avoid_insert_conflict,
+      column_keys,
+      dynamic_keys
+    )
 
     sql = <<~SQL
       INSERT INTO #{self.class.table_name} ( #{column_keys} )
@@ -95,6 +96,18 @@ module SneakySave
 
   def copy_internal(source, target, key)
     target.instance_variable_set(key, source.instance_variable_get(key))
+  end
+
+  def generate_constraint(avoid_insert_conflict, column_keys, column_keys)
+    options = avoid_insert_conflict.extract_options!
+    return unless avoid_insert_conflict.present?
+
+    on_conflict = "ON CONFLICT (#{[avoid_insert_conflict].flatten.join(', ')}) "
+    if options[:where].present?
+      on_conflict += "WHERE #{options[:where]} "
+    end
+    on_conflict += "DO UPDATE SET (#{column_keys}) = (#{dynamic_keys})"
+    on_conflict
   end
 
   def generate_insert_mapping(attributes)
