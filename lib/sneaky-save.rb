@@ -98,7 +98,7 @@ module SneakySave
     target.instance_variable_set(key, source.instance_variable_get(key))
   end
 
-  def generate_constraint(avoid_insert_conflict, column_keys, column_keys)
+  def generate_constraint(avoid_insert_conflict, column_keys, dynamic_keys)
     options = avoid_insert_conflict.extract_options!
     return unless avoid_insert_conflict.present?
 
