@@ -63,11 +63,11 @@ module SneakySave
     mapping = generate_insert_mapping(sneaky_attributes_without_id)
     data = self.class.unscoped.find_by_sql([sql.squish, mapping.to_h]).first
 
-    copy_internal(data, self, "@attributes")
-    copy_internal(data, self, "@mutations_from_database")
-    copy_internal(data, self, "@changed_attributes")
-    copy_internal(data, self, "@new_record")
-    copy_internal(data, self, "@destroyed")
+    copy_internal(data, "@attributes")
+    copy_internal(data, "@mutations_from_database")
+    copy_internal(data, "@changed_attributes")
+    copy_internal(data, "@new_record")
+    copy_internal(data, "@destroyed")
 
     !!id
   end
@@ -94,8 +94,8 @@ module SneakySave
       update_all(changed_attributes).zero?
   end
 
-  def copy_internal(source, target, key)
-    target.instance_variable_set(key, source.instance_variable_get(key))
+  def copy_internal(source, key)
+    instance_variable_set(key, source.instance_variable_get(key))
   end
 
   def generate_constraint(avoid_insert_conflict, column_keys, dynamic_keys)
