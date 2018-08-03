@@ -63,6 +63,10 @@ module SneakySave
     mapping = generate_insert_mapping(sneaky_attributes_without_id)
     data = self.class.unscoped.find_by_sql([sql.squish, mapping.to_h]).first
 
+    # To trigger generation of @mutations_from_database variable
+    # which is necessary for id_in_database
+    data.send(:mutations_from_database)
+
     copy_internal(data, "@attributes")
     copy_internal(data, "@mutations_from_database")
     copy_internal(data, "@changed_attributes")
