@@ -11,9 +11,9 @@ module SneakySave
   #       - Saves only belongs_to relations.
   #
   # @return [false, true]
-  def sneaky_save
+  def sneaky_save(avoid_insert_conflict: nil)
     begin
-      sneaky_create_or_update
+      sneaky_create_or_update(avoid_insert_conflict: avoid_insert_conflict)
     rescue ActiveRecord::StatementInvalid
       false
     end
@@ -23,41 +23,57 @@ module SneakySave
   # @see ActiveRecord::Base#sneaky_save
   # @return [true] if save was successful.
   # @raise [ActiveRecord::StatementInvalid] if saving failed.
-  def sneaky_save!
-    sneaky_create_or_update
+  def sneaky_save!(avoid_insert_conflict: nil)
+    sneaky_create_or_update(avoid_insert_conflict: avoid_insert_conflict)
   end
 
   protected
 
-  def sneaky_create_or_update
-    new_record? ? sneaky_create : sneaky_update
+  def sneaky_create_or_update(avoid_insert_conflict: nil)
+    new_record? ? sneaky_create(avoid_insert_conflict: avoid_insert_conflict) : sneaky_update
   end
 
   # Performs INSERT query without running any callbacks
   # @return [false, true]
-  def sneaky_create
-    prefetch_pk_allowed = sneaky_connection.prefetch_primary_key?(self.class.table_name)
+  def sneaky_create(avoid_insert_conflict: nil)
+    sneaky_attributes_without_id = sneaky_attributes_values
+                                   .except { |key| key.name == "id" }
 
-    if id.nil? && prefetch_pk_allowed
-      self.id = sneaky_connection.next_sequence_value(self.class.sequence_name)
-    end
+    column_keys = sneaky_attributes_without_id.keys
+                  .map { |key| "\"#{key.name}\"" } # to avoid conflicts with column names
+                  .join(", ")
 
-    attributes_values = sneaky_attributes_values
+    dynamic_keys = sneaky_attributes_without_id.keys
+                   .map { |key| ":#{key.name}" }
+                   .join(", ")
 
-    # Remove the id field for databases like Postgres
-    # which fail with id passed as NULL
-    if id.nil? && !prefetch_pk_allowed
-      attributes_values.reject! { |key, _| key.name == 'id' }
-    end
+    constraint = generate_constraint(
+      avoid_insert_conflict,
+      column_keys,
+      dynamic_keys
+    )
 
-    if attributes_values.empty?
-      new_id = self.class.unscoped.insert(sneaky_connection.empty_insert_statement_value)
-    else
-      new_id = self.class.unscoped.insert(attributes_values)
-    end
+    sql = <<~SQL
+      INSERT INTO #{self.class.table_name} ( #{column_keys} )
+      VALUES (#{dynamic_keys})
+      #{constraint}
+      RETURNING *
+    SQL
 
-    @new_record = false
-    !!(self.id ||= new_id)
+    mapping = generate_insert_mapping(sneaky_attributes_without_id)
+    data = self.class.unscoped.find_by_sql([sql.squish, mapping.to_h]).first
+
+    # To trigger generation of @mutations_from_database variable
+    # which is necessary for id_in_database
+    data.send(:mutations_from_database)
+
+    copy_internal(data, "@attributes")
+    copy_internal(data, "@mutations_from_database")
+    copy_internal(data, "@changed_attributes")
+    copy_internal(data, "@new_record")
+    copy_internal(data, "@destroyed")
+
+    !!id
   end
 
   # Performs update query without running callbacks
@@ -80,6 +96,41 @@ module SneakySave
 
     !self.class.unscoped.where(pk => original_id).
       update_all(changed_attributes).zero?
+  end
+
+  def copy_internal(source, key)
+    instance_variable_set(key, source.instance_variable_get(key))
+  end
+
+  def generate_constraint(avoid_insert_conflict, column_keys, dynamic_keys)
+    options = avoid_insert_conflict&.extract_options!
+    return unless avoid_insert_conflict.present?
+
+    on_conflict = "ON CONFLICT (#{[avoid_insert_conflict].flatten.join(', ')}) "
+    if options&.dig(:where).present?
+      on_conflict += "WHERE #{options[:where]} "
+    end
+    on_conflict += "DO UPDATE SET (#{column_keys}) = (#{dynamic_keys})"
+    on_conflict
+  end
+
+  def generate_insert_mapping(attributes)
+    attributes.map do |definition, value|
+      if definition.able_to_type_cast?
+        result = definition.type_cast_for_database(value)
+        if result.is_a?(Struct)
+          if result.respond_to?(:encoder)
+            [definition.name.to_sym, result.encoder.encode(value)]
+          else
+            raise RuntimeError.new('Unknown Type Casted Struct')
+          end
+        else
+          [definition.name.to_sym, result]
+        end
+      else
+        [definition.name.to_sym, value]
+      end
+    end
   end
 
   def sneaky_attributes_values
