@@ -86,14 +86,6 @@ module SneakySave
 
     changed_attributes = sneaky_update_fields
 
-    # Serialize values for rails3 before updating
-    unless sneaky_new_rails?
-      serialized_fields = self.class.serialized_attributes.keys & changed_attributes.keys
-      serialized_fields.each do |field|
-        changed_attributes[field] = @attributes[field].serialized_value
-      end
-    end
-
     !self.class.where(pk => original_id).
       update_all(changed_attributes).zero?
   end
@@ -120,25 +112,33 @@ module SneakySave
         result = definition.type_cast_for_database(value)
         if result.is_a?(Struct)
           if result.respond_to?(:encoder)
-            [definition.name.to_sym, result.encoder.encode(value)]
+            [definition.name.to_sym, quote(result.encoder.encode(value))]
           else
             raise RuntimeError.new('Unknown Type Casted Struct')
           end
         else
-          [definition.name.to_sym, result]
+          [definition.name.to_sym, quote(result)]
         end
       else
-        [definition.name.to_sym, value]
+        [definition.name.to_sym, quote(value)]
       end
     end
   end
 
   def sneaky_attributes_values
-    if sneaky_new_rails?
-      send :arel_attributes_with_values_for_create, attribute_names
-    else
-      send :arel_attributes_values
+    attributes_with_values = send :attributes_with_values_for_create, attribute_names
+    attributes_with_values.each_with_object({}) do |attribute_value, hash|
+      hash[self.class.send(:arel_attribute, attribute_value[0])] = attribute_value[1]
     end
+  end
+
+  def quote(value)
+    # The built-in Sanitization of Rails does not handle time ranges very well. We work around this
+    # by manipulating ranges so that they are not seen as iterable and will be properly handled by
+    # ActiveRecord::Sanitization.quote_bound_value
+    # https://github.com/rails/rails/issues/36682
+    value.instance_eval('undef :map') if value.is_a?(Range)
+    value
   end
 
   def sneaky_update_fields
@@ -148,15 +148,7 @@ module SneakySave
   end
 
   def sneaky_connection
-    if sneaky_new_rails?
-      self.class.connection
-    else
-      connection
-    end
-  end
-
-  def sneaky_new_rails?
-    ActiveRecord::VERSION::STRING.to_i > 3
+    self.class.connection
   end
 end
 
