@@ -126,7 +126,8 @@ module SneakySave
   end
 
   def sneaky_attributes_values
-    attributes_with_values = send :attributes_with_values_for_create, attribute_names
+    attributes_for_create = send :attributes_for_create, attribute_names
+    attributes_with_values = send :attributes_with_values, attributes_for_create
     attributes_with_values.each_with_object({}) do |attribute_value, hash|
       hash[self.class.send(:arel_attribute, attribute_value[0])] = attribute_value[1]
     end
