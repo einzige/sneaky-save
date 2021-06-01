@@ -4,6 +4,10 @@
 #++
 module SneakySave
 
+  class NonEnumerableRange < Range
+    undef :map
+  end
+
   # Saves the record without running callbacks/validations.
   # Returns true if the record is changed.
   # @note - Does not reload updated record by default.
@@ -138,7 +142,10 @@ module SneakySave
     # by manipulating ranges so that they are not seen as iterable and will be properly handled by
     # ActiveRecord::Sanitization.quote_bound_value
     # https://github.com/rails/rails/issues/36682
-    value.instance_eval('undef :map') if value.is_a?(Range)
+    if value.is_a?(Range)
+      # Ranges are frozen in Ruby 3. We construct a new Range that isn't enumerable.
+      return NonEnumerableRange.new(value.first, value.end)
+    end
     value
   end
 
